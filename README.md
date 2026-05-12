@@ -35,7 +35,9 @@ Install required dependencies - Follow the instructions provided in the exercise
 
 Download data:
 
-    ./download_iwslt_2017_data.sh
+       python ./scripts/download_huggingface_data.py --src en --trg nl --out data
+
+You can choose any supported direction except `de-en`. Good options are `en-nl`, `en-it`, `en-ro`, `nl-en`, `it-en`, or `ro-en`.
 
 
 Train the model:
@@ -58,8 +60,11 @@ Note: The make_virtualenv.sh script will not work in native Windows shells.
 
 Manually download the dataset
 
-Open the download_iwslt_2017_data.sh file in a text editor and run the commands one-by-one in your shell.
-Alternatively, use Git Bash or WSL to run it directly.
+Use the Python downloader script directly, for example:
+
+       python scripts/download_huggingface_data.py --src en --trg nl --out data
+
+If you want a different language pair, replace `--src` and `--trg` with one of the supported directions listed above.
 
 Modify, train, and evaluate
 Once setup is complete, use the instructions in the exercise PDF to run training and evaluation (either by adapting the .sh scripts manually, or by using Git Bash/WSL).
