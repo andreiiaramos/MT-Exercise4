@@ -46,6 +46,10 @@ Train the model:
 
 *the training process can be interrupted at any time. The best checkpoint will always be saved automatically.
 
+Before training, run a quick environment check:
+
+       bash ./scripts/preflight.sh
+
 Evaluate the model:
 
        ./scripts/evaluate.sh
