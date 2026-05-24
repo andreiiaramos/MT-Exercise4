@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 set -euo pipefail
 
 scripts=$(dirname "$0")
@@ -11,10 +11,17 @@ hotfix_dir=$tools_dir/joeynmt-hotfixed
 mkdir -p "$base/venvs" "$tools_dir"
 
 if [ ! -d "$venv_dir" ]; then
-    python3 -m virtualenv -p python3.10 "$venv_dir"
+    python3 -m venv "$venv_dir"
 fi
 
-pip="$venv_dir/bin/python -m pip"
+if [ -d "$venv_dir/Scripts" ]; then
+    pip="$venv_dir/Scripts/python.exe -m pip"
+    activate_path="$venv_dir/Scripts/activate"
+else
+    pip="$venv_dir/bin/python -m pip"
+    activate_path="$venv_dir/bin/activate"
+fi
+
 $pip install --upgrade pip
 $pip install "numpy<2" sacremoses nltk "datasets==3.6.0" subword-nmt sacrebleu
 
@@ -23,4 +30,5 @@ if [ ! -d "$hotfix_dir/.git" ]; then
 fi
 $pip install -e "$hotfix_dir"
 
-echo "activate with: source $venv_dir/bin/activate"
+echo "To activate your environment:"
+echo "    source $activate_path"

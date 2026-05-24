@@ -1,2 +1,7 @@
 .cache/*
 venvs/*
+models/*
+data/*
+venvs/*
+translations/*
+logs/*

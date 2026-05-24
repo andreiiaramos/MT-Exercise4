@@ -1,6 +1,6 @@
 #! /bin/bash
 set -euo pipefail
-
+export PYTHONUTF8=1
 scripts=$(dirname "$0")
 base=$(cd "$scripts/.." && pwd)
 
@@ -43,4 +43,4 @@ else
 fi
 
 echo "BLEU ($model_name on $DEVICE_NAME):"
-cat "$hyp_file" | sacrebleu "$data/test.it"
+cat "$hyp_file" | sacremoses -l it detokenize | sacrebleu "$base/data/test.it"

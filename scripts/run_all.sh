@@ -1,6 +1,6 @@
 #! /bin/bash
 set -euo pipefail
-
+export PYTHONUTF8=1
 scripts=$(dirname "$0")
 base=$(cd "$scripts/.." && pwd)
 cd "$base"

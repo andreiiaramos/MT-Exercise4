@@ -21,6 +21,6 @@ for split in train dev test; do
             continue
         fi
         echo "tokenize $in_file"
-        sacremoses -l "$lang" tokenize -x < "$in_file" > "$out_file"
+        PYTHONUTF8=1 sacremoses -l "$lang" tokenize -x < "$in_file" > "$out_file"
     done
 done
