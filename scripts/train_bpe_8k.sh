@@ -1,27 +1,27 @@
 #! /bin/bash
-# Train the BPE model with an 8k joint vocabulary.
-
 set -euo pipefail
 
 scripts=$(dirname "$0")
-base=$scripts/..
+base=$(cd "$scripts/.." && pwd)
 
-models=$base/models
-configs=$base/configs
-logs=$base/logs
-
-mkdir -p "$models" "$logs"
-
-num_threads=4
+# shellcheck disable=SC1091
+source "$scripts/_device.sh"
 
 model_name=bpe_8k
+config_file=$base/$CONFIG_DIR/$model_name.yaml
+model_dir=$base/models/$model_name
+logs_dir=$base/logs/$model_name
 
-mkdir -p "$logs/$model_name"
+if compgen -G "$model_dir/*.ckpt" >/dev/null; then
+    echo "skip $model_name (checkpoint already in $model_dir)"
+    exit 0
+fi
+
+mkdir -p "$base/models" "$logs_dir"
+
+echo "train $model_name on $DEVICE_NAME using $config_file"
 
 SECONDS=0
-
-OMP_NUM_THREADS=$num_threads python -m joeynmt train "$configs/$model_name.yaml" \
-    > "$logs/$model_name/out" 2> "$logs/$model_name/err"
-
-echo "time taken:"
-echo "$SECONDS seconds"
+OMP_NUM_THREADS=4 python3 -m joeynmt train "$config_file" \
+    > "$logs_dir/out" 2> "$logs_dir/err"
+echo "done in $SECONDS s"

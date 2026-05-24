@@ -1,7 +1,6 @@
 name: "word_2k"
 joeynmt_version: "2.0.0"
 
-
 data:
     train: "data/word/train"
     dev:   "data/word/dev"
@@ -12,10 +11,7 @@ data:
         level: "word"
         lowercase: False
         max_sent_length: 100
-        # either use a vocabulary limit:
         voc_limit: 2000
-        # or (= not both!) a file with a vocabulary built before starting the training:
-        # voc_file : ""
         tokenizer_type: "subword-nmt"
         tokenizer_cfg:
             pretokenizer: "none"
@@ -24,10 +20,7 @@ data:
         level: "word"
         lowercase: False
         max_sent_length: 100
-        # either use a vocabulary limit:
         voc_limit: 2000
-        # or (= not both!) a file with a vocabulary built before starting the training:
-        # voc_file : ""
         tokenizer_type: "subword-nmt"
         tokenizer_cfg:
             pretokenizer: "none"

@@ -1,21 +1,17 @@
 name: "bpe_2k"
 joeynmt_version: "2.0.0"
 
-
 data:
-    train: "data/bpe2k/train.bpe"
-    dev:   "data/bpe2k/dev.bpe"
-    test:  "data/bpe2k/test.bpe"
+    train: "data/word/train"
+    dev:   "data/word/dev"
+    test:  "data/word/test"
     dataset_type: "plain"
     src:
         lang: "en"
         level: "bpe"
         lowercase: False
         max_sent_length: 100
-        # either use a vocabulary limit:
-        # voc_limit: 0
-        # or (= not both!) a file with a vocabulary built before starting the training:
-        voc_file : "data/bpe2k/joint.vocab"
+        voc_file: "data/bpe2k/joint.vocab"
         tokenizer_type: "subword-nmt"
         tokenizer_cfg:
             codes: "data/bpe2k/bpe.codes"
@@ -26,10 +22,7 @@ data:
         level: "bpe"
         lowercase: False
         max_sent_length: 100
-        # either use a vocabulary limit:
-        # voc_limit: 0
-        # or (= not both!) a file with a vocabulary built before starting the training:
-        voc_file : "data/bpe2k/joint.vocab"
+        voc_file: "data/bpe2k/joint.vocab"
         tokenizer_type: "subword-nmt"
         tokenizer_cfg:
             codes: "data/bpe2k/bpe.codes"

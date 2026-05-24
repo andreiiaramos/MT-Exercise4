@@ -1,19 +1,26 @@
 #! /bin/bash
-
-# virtualenv must be installed on your system, install with e.g.
-# pip install virtualenv
+set -euo pipefail
 
 scripts=$(dirname "$0")
-base=$scripts/..
+base=$(cd "$scripts/.." && pwd)
 
-mkdir -p $base/venvs
+venv_dir=$base/venvs/torch3
+tools_dir=$base/tools
+hotfix_dir=$tools_dir/joeynmt-hotfixed
 
-# python3 needs to be installed on your system
+mkdir -p "$base/venvs" "$tools_dir"
 
-python3 -m virtualenv -p python3.10 $base/venvs/torch3
+if [ ! -d "$venv_dir" ]; then
+    python3 -m virtualenv -p python3.10 "$venv_dir"
+fi
 
-# install required packages only
-$base/venvs/torch3/bin/python -m pip install "numpy<2" sacremoses nltk "datasets==3.6.0"
+pip="$venv_dir/bin/python -m pip"
+$pip install --upgrade pip
+$pip install "numpy<2" sacremoses nltk "datasets==3.6.0" subword-nmt sacrebleu
 
-echo "To activate your environment:"
-echo "    source $base/venvs/torch3/bin/activate"
+if [ ! -d "$hotfix_dir/.git" ]; then
+    git clone https://github.com/moritz-steiner/joeynmt-hotfixed "$hotfix_dir"
+fi
+$pip install -e "$hotfix_dir"
+
+echo "activate with: source $venv_dir/bin/activate"

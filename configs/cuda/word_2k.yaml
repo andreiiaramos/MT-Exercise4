@@ -1,4 +1,4 @@
-name: "bpe_8k"
+name: "word_2k"
 joeynmt_version: "2.0.0"
 
 data:
@@ -8,25 +8,21 @@ data:
     dataset_type: "plain"
     src:
         lang: "en"
-        level: "bpe"
+        level: "word"
         lowercase: False
         max_sent_length: 100
-        voc_file: "data/bpe8k/joint.vocab"
+        voc_limit: 2000
         tokenizer_type: "subword-nmt"
         tokenizer_cfg:
-            codes: "data/bpe8k/bpe.codes"
-            separator: "@@"
             pretokenizer: "none"
     trg:
         lang: "it"
-        level: "bpe"
+        level: "word"
         lowercase: False
         max_sent_length: 100
-        voc_file: "data/bpe8k/joint.vocab"
+        voc_limit: 2000
         tokenizer_type: "subword-nmt"
         tokenizer_cfg:
-            codes: "data/bpe8k/bpe.codes"
-            separator: "@@"
             pretokenizer: "none"
 
 testing:
@@ -51,10 +47,10 @@ training:
     validation_freq: 500
     logging_freq: 100
     eval_metric: "bleu"
-    model_dir: "models/bpe_8k"
+    model_dir: "models/word_2k"
     overwrite: False
     shuffle: True
-    use_cuda: False
+    use_cuda: True
     max_output_length: 100
     print_valid_sents: [0, 1, 2, 3, 4]
     label_smoothing: 0.3
@@ -65,8 +61,8 @@ model:
     init_gain: 1.0
     embed_initializer: "xavier_uniform"
     embed_init_gain: 1.0
-    tied_embeddings: True
-    tied_softmax: True
+    tied_embeddings: False
+    tied_softmax: False
     encoder:
         type: "transformer"
         num_layers: 4

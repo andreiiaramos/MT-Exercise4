@@ -1,85 +1,128 @@
-# MT Exercise 4: Byte Pair Encoding, Beam Search
+# MT Exercise 4 — Byte Pair Encoding & Beam Search
 
-This repository is a starting point for the 4th and final exercise. As before, fork this repo to your own account and then clone it into your preferred directory.
+Train three en→it transformer NMT systems on IWSLT 2017 (word-level with a 2k vocab threshold; BPE with 2k joint vocab; BPE with 8k joint vocab) and study the impact of beam size on translation quality.
 
----
+Everything the pipeline writes lives inside this repository: `venvs/`, `tools/`, `.cache/`, `data/`, `models/`, `logs/`, `translations/`. Nothing is written outside the repo.
 
 ## Requirements
 
-- Python 3.10 must be installed. The command `python3` (or `python` on Windows) should be available from your terminal or command prompt.
-- `virtualenv` must be installed. Install it with:
+- Python 3.10 (must be reachable as `python3` — on macOS `python` alone is usually absent)
+- `virtualenv` (`pip install virtualenv`)
+- `git`
+- On Windows: run the shell scripts from **Git Bash** or WSL
+- On macOS with Apple Silicon: training runs on CPU (no CUDA on M1/M2)
+- On NVIDIA GPUs: install torch with CUDA, e.g. `pip install torch --index-url https://download.pytorch.org/whl/cu121` (do this after `make_virtualenv.sh` if `torch.cuda.is_available()` returns `False`)
 
-  ```bash
-  pip install virtualenv
+## One-time setup
 
-macOS/Linux users: No special setup needed; shell scripts should run normally.
+```
+./scripts/make_virtualenv.sh
+source ./venvs/torch3/bin/activate
+```
 
-Windows users: Either use Windows Subsystem for Linux (WSL) or a Unix-compatible shell like Git Bash.
-If you're using PowerShell or Command Prompt, manual setup is required.
+`make_virtualenv.sh` creates the venv at `venvs/torch3/`, installs `numpy<2 sacremoses nltk datasets==3.6.0 subword-nmt sacrebleu`, clones `joeynmt-hotfixed` into `tools/joeynmt-hotfixed/`, and installs it editable. Re-running is safe — every step is idempotent.
 
-### Setup Instructions
+## Device detection
 
-## For macOS / Linux / WSL / Git Bash users
+`scripts/_device.sh` is sourced by every script that runs JoeyNMT. It checks `torch.cuda.is_available()` and exports:
 
-Clone your fork of the repository + Create a virtual environment:
-   ```
-   git clone https://github.com/[your-username]/mt-exercise-4
-   cd mt-exercise-4 
+- `DEVICE_NAME=cuda`, `CONFIG_DIR=configs/cuda` → CUDA path
+- `DEVICE_NAME=cpu`,  `CONFIG_DIR=configs`      → CPU path
 
-   ```
-    ./scripts/make_virtualenv.sh
+Both config sets are byte-for-byte identical except for `use_cuda`. Train/eval scripts auto-pick the right set; you don't pass a flag.
 
-Important: Then activate the env by executing the source command that is output by the shell script above.
+`./scripts/preflight.sh` prints which path is active, whether an NVIDIA GPU is visible, and whether all required commands, configs, and Python modules are present. It also lists data artifacts (present/missing) and model checkpoints (trained/pending).
 
-Install required dependencies - Follow the instructions provided in the exercise PDF.
+## End-to-end run
 
-Download data:
+```
+./scripts/preflight.sh        # optional sanity check
+./scripts/run_all.sh
+```
 
-       python ./scripts/download_huggingface_data.py --src en --trg nl --out data
+`run_all.sh`:
 
-You can choose any supported direction except `de-en`. Good options are `en-nl`, `en-it`, `en-ro`, `nl-en`, `it-en`, or `ro-en`.
+1. activates `venvs/torch3` if a venv isn't already active,
+2. sources `_device.sh` and reports the detected device,
+3. on macOS, wraps the pipeline in `caffeinate -i` (system stays awake) and fires `pmset displaysleepnow` after 10 s (display goes dark; on other OSes both calls are skipped),
+4. runs `prepare_data.sh` → `train_word_2k.sh` → `train_bpe_2k.sh` → `train_bpe_8k.sh`.
 
+Every step skips itself if its output already exists, so re-running after interruption resumes where it stopped.
 
-Train the model:
+## Pipeline stages and their caches
 
-       ./scripts/train.sh
+| Script                              | Output(s)                                            | Skip condition                                                       |
+| ---                                 | ---                                                  | ---                                                                  |
+| `scripts/download_huggingface_data.py` | `data/{train,dev,test}.{en,it}`                  | `data/train.en` + `data/train.it` + `data/dev.en` + `data/test.en` already exist |
+| `scripts/tokenize.sh`               | `data/word/{train,dev,test}.{en,it}`                 | Per-file: output exists and is newer than input                      |
+| `scripts/learn_apply_bpe.sh N D`    | `D/bpe.codes`, `D/joint.vocab`                       | Both files already exist in `D`                                      |
+| `scripts/train_*.sh`                | `models/<name>/*.ckpt`, `logs/<name>/{out,err}`     | Any `*.ckpt` already in `models/<name>/`                             |
+| `scripts/evaluate.sh <name>`        | `translations/<name>/test.<name>.it`                 | Hypothesis file already exists (sacrebleu still runs over it)        |
 
-*the training process can be interrupted at any time. The best checkpoint will always be saved automatically.
+The HuggingFace cache is forced into `./.cache/huggingface/` via `HF_HOME`, `HF_DATASETS_CACHE`, `HF_HUB_CACHE`, so nothing lands in `~/.cache/`.
 
-Before training, run a quick environment check:
+## Individual steps
 
-       bash ./scripts/preflight.sh
+```
+./scripts/prepare_data.sh        # download + tokenize + learn BPE @ 2k & 8k
+./scripts/train_word_2k.sh
+./scripts/train_bpe_2k.sh
+./scripts/train_bpe_8k.sh
+./scripts/evaluate.sh word_2k    # translate test set + sacrebleu
+./scripts/evaluate.sh bpe_2k
+./scripts/evaluate.sh bpe_8k
+```
 
-Evaluate the model:
+All three configs point `train`/`dev`/`test` at `data/word/` because JoeyNMT applies BPE internally via `tokenizer_cfg.codes` (per the exercise sheet). `data/bpe2k/` and `data/bpe8k/` only hold the BPE codes and joint vocab files.
 
-       ./scripts/evaluate.sh
+## Configs
 
-## For Windows (Command Prompt / PowerShell users)
-Manually create and activate a virtual environment:
+| File                          | Vocabulary                          | `use_cuda` |
+| ---                           | ---                                 | ---        |
+| `configs/word_2k.yaml`        | `voc_limit: 2000`, untied embeddings | False      |
+| `configs/bpe_2k.yaml`         | joint `data/bpe2k/joint.vocab`       | False      |
+| `configs/bpe_8k.yaml`         | joint `data/bpe8k/joint.vocab`       | False      |
+| `configs/cuda/word_2k.yaml`   | same as above                        | True       |
+| `configs/cuda/bpe_2k.yaml`    | same as above                        | True       |
+| `configs/cuda/bpe_8k.yaml`    | same as above                        | True       |
 
-        python -m venv mt_env
-        mt_env\Scripts\activate
+Other settings are identical to `configs/transformer_sample_config.yaml` (transformer, 4 encoder / 1 decoder layers, 256-dim, batch 2048 tokens, label smoothing 0.3, plateau LR schedule, 10 epochs). The word-level config sets `tied_embeddings: False` and `tied_softmax: False`; the BPE configs keep them `True` because vocab is joint.
 
-Note: The make_virtualenv.sh script will not work in native Windows shells.
+## Expected runtimes (very rough)
 
-Manually download the dataset
+- M1 / M2 Mac, CPU: 6–8 h per model → ~24 h for all three
+- Intel Arc / iGPU (no CUDA), CPU fallback: similar to M1
+- NVIDIA RTX 3070 with CUDA: ~10–30 min per model
 
-Use the Python downloader script directly, for example:
+If you hit memory pressure on a small machine, lower `batch_size: 2048` → `512` and `eval_batch_size: 1024` → `256` in the three configs you actually use (CPU or CUDA set, not both).
 
-       python scripts/download_huggingface_data.py --src en --trg nl --out data
+## Re-running and overrides
 
-If you want a different language pair, replace `--src` and `--trg` with one of the supported directions listed above.
+- Re-running any script is safe; cached outputs are skipped.
+- To force a step to re-run, delete its output (`rm -rf models/word_2k`, `rm data/bpe2k/bpe.codes`, etc.).
+- To switch device after a CPU run, delete the relevant `models/<name>/` then re-run; `_device.sh` will pick `configs/cuda/` automatically once `torch.cuda.is_available()` flips.
 
-Modify, train, and evaluate
-Once setup is complete, use the instructions in the exercise PDF to run training and evaluation (either by adapting the .sh scripts manually, or by using Git Bash/WSL).
+## Exercise 2 — beam search
 
-#### Notes for Windows Users
+Use the best of the three trained models. Translate `data/word/test.en` repeatedly with different `testing.beam_size` values (suggested set: 1, 2, 3, 5, 8, 10, 15, 20, 30, 50), record case-sensitive sacrebleu and elapsed wall-clock time, and plot both against beam size.
 
-  Using Git Bash or WSL is highly recommended for compatibility.
+## Repository layout
 
-  If using native PowerShell or Command Prompt:
+```
+configs/                  # CPU configs (use_cuda: False)
+configs/cuda/             # CUDA configs (use_cuda: True)
+configs/transformer_sample_config.yaml   # original template (unmodified)
+scripts/                  # bash + python entry points
+scripts/_device.sh        # sourced helper (sets DEVICE_NAME, CONFIG_DIR)
+venvs/torch3/             # local virtualenv (created by make_virtualenv.sh)
+tools/joeynmt-hotfixed/   # cloned dependency (editable install)
+.cache/huggingface/       # HF datasets cache
+data/                     # raw + tokenized + BPE artifacts
+models/                   # trained checkpoints
+logs/                     # stdout/stderr per model
+translations/             # per-model test set hypotheses
+```
 
-  Manual recreation of shell script steps will be necessary.
+## Submission
 
-  Always activate your virtual environment before running any training or evaluation steps.
-
+Group submission on OLAT as `<olatuser1>_<olatuser2>_mt_exercise_04.zip`. Include a link to the GitHub fork and (optionally) a PDF write-up with the BLEU table for Exercise 1 and the beam-size plots for Exercise 2.
