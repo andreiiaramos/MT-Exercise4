@@ -104,8 +104,34 @@ If you hit memory pressure on a small machine, lower `batch_size: 2048` → `512
 
 ## Exercise 2 — beam search
 
-Use the best of the three trained models. Translate `data/word/test.en` repeatedly with different `testing.beam_size` values (suggested set: 1, 2, 3, 5, 8, 10, 15, 20, 30, 50), record case-sensitive sacrebleu and elapsed wall-clock time, and plot both against beam size.
+Beam search experiments are implemented using the best-performing model (`bpe_8k`).
 
+The script
+
+```bash
+./scripts/evaluate_beam.sh
+```
+
+evaluates beam sizes 1–10, records BLEU scores and translation times in `beam_search_results.csv`, and stores the generated translations in:
+
+```text
+translations/bpe_8k/
+```
+
+The script
+
+```bash
+python scripts/plot_graphs.py
+```
+
+creates the following graphs:
+
+```text
+graphs/beam_vs_bleu.png
+graphs/beam_vs_time.png
+```
+
+All numerical results and analysis are documented in `README_Results.md`.
 ## Repository layout
 
 ```
@@ -120,9 +146,19 @@ tools/joeynmt-hotfixed/   # cloned dependency (editable install)
 data/                     # raw + tokenized + BPE artifacts
 models/                   # trained checkpoints
 logs/                     # stdout/stderr per model
-translations/             # per-model test set hypotheses
+translations/             # test-set translations and beam-search outputs
+graphs/                   # beam-search plots
+beam_search_results.csv   # BLEU/time measurements for beam sizes 1–10
+README_Results.md         # experiment results and analysis
 ```
 
 ## Submission
 
-Group submission on OLAT as `<olatuser1>_<olatuser2>_mt_exercise_04.zip`. Include a link to the GitHub fork and (optionally) a PDF write-up with the BLEU table for Exercise 1 and the beam-size plots for Exercise 2.
+The repository contains:
+
+- all scripts required to reproduce preprocessing, training, evaluation, and beam-search experiments,
+- trained model artifacts,
+- beam-search measurements and plots,
+- experimental results and discussion in `README_Results.md`.
+
+Submission consists of a link to this repository, together with any additional files required by the course submission guidelines.
