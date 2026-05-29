@@ -88,14 +88,6 @@ All three configs point `train`/`dev`/`test` at `data/word/` because JoeyNMT app
 
 Other settings are identical to `configs/transformer_sample_config.yaml` (transformer, 4 encoder / 1 decoder layers, 256-dim, batch 2048 tokens, label smoothing 0.3, plateau LR schedule, 10 epochs). The word-level config sets `tied_embeddings: False` and `tied_softmax: False`; the BPE configs keep them `True` because vocab is joint.
 
-## Expected runtimes (very rough)
-
-- M1 / M2 Mac, CPU: 6–8 h per model → ~24 h for all three
-- Intel Arc / iGPU (no CUDA), CPU fallback: similar to M1
-- NVIDIA RTX 3070 with CUDA: ~10–30 min per model
-
-If you hit memory pressure on a small machine, lower `batch_size: 2048` → `512` and `eval_batch_size: 1024` → `256` in the three configs you actually use (CPU or CUDA set, not both).
-
 ## Re-running and overrides
 
 - Re-running any script is safe; cached outputs are skipped.
@@ -161,4 +153,4 @@ The repository contains:
 - beam-search measurements and plots,
 - experimental results and discussion in `README_Results.md`.
 
-Submission consists of a link to this repository, together with any additional files required by the course submission guidelines.
+**AI Disclosure: GenAI was used to create this README.
