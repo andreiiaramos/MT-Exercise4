@@ -153,4 +153,4 @@ The repository contains:
 - beam-search measurements and plots,
 - experimental results and discussion in `README_Results.md`.
 
-**AI Disclosure: GenAI was used to create this README.
+**AI Disclosure:** GenAI was used to create this README.
