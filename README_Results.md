@@ -67,9 +67,10 @@ Here are the results of the second part:
 
 In the beam search experiment results, it is found that an increase in the beam size greatly improved the translation performance than using greedy decoding. The BLEU scores raised from 19.9 (beam_size=1) to about 22.0 with the beam sizes from 4 to 9. 
 
-Nevertheless, starting from beam size 4, the BLEU gains were minimal while the decoding time kept rising rapidly. The decoding time rose from 19 seconds when using beam size 1 to 51 seconds using beam size 10.
+Nevertheless, starting from beam size 4, the BLEU gains were minimal while the decoding time kept rising rapidly. The decoding time rose from 19 seconds when using beam size 1 to 51 seconds using beam size 10.In the future, we would opt for beam_size=4 or beam_size=5 for the good BLEU scores and the decoding time.
 
 The highest BLEU score of 22.1, was obtained with a beam size of 9; however, there was little improvement compared to the previous beam sizes. It seems that a beam size of 4 or 5 works well for decoding.
+
 
 Here is an example:
 
